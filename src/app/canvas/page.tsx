@@ -340,10 +340,10 @@ export default function MoodboardPage() {
       <div className="flex h-[100dvh] flex-col overflow-hidden" style={{ background: 'var(--background)' }}>
         {header}
         <div className="flex flex-1 min-h-0">
-          {/* Canvas */}
+          {/* Canvas — 80% width */}
           <div className="flex flex-1 flex-col min-w-0 p-5 gap-3">
             <div className="flex-1 min-h-0 flex items-center justify-center">
-              <div className="w-full" style={{ maxHeight: '100%', aspectRatio: '16/10' }}>
+              <div style={{ width: '80%', maxHeight: '100%', aspectRatio: '16/10' }}>
                 <RoomScene items={items} palette={activePalette} scene={activeScene}
                   onRemove={id => selectionStore.toggle(id)} editMode={editMode}
                   layout={layout} onLayoutChange={setLayoutFor} onResetItem={resetLayoutFor} />
@@ -429,11 +429,13 @@ export default function MoodboardPage() {
         </p>
       </section>
 
-      {/* Room scene */}
+      {/* Room scene — 80% width, centred */}
       <section className="mx-auto max-w-[1500px] px-6 md:px-10">
-        <RoomScene items={items} palette={activePalette} scene={activeScene}
-          onRemove={id => selectionStore.toggle(id)} editMode={editMode}
-          layout={layout} onLayoutChange={setLayoutFor} onResetItem={resetLayoutFor} />
+        <div className="mx-auto" style={{ width: '80%' }}>
+          <RoomScene items={items} palette={activePalette} scene={activeScene}
+            onRemove={id => selectionStore.toggle(id)} editMode={editMode}
+            layout={layout} onLayoutChange={setLayoutFor} onResetItem={resetLayoutFor} />
+        </div>
       </section>
 
       {/* Scene picker */}
