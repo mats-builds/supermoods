@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { X, Plus, Check, ExternalLink } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { X, Plus, Check, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Product } from '@/lib/types'
 
 interface Props {
@@ -15,22 +15,33 @@ export default function ProductModal({ product, selected, onToggle, onClose }: P
   const [imgIdx, setImgIdx] = useState(0)
   const allImages = [product.src, ...(product.gallery ?? [])].filter(Boolean)
 
+  const prev = useCallback(() => setImgIdx(i => Math.max(0, i - 1)), [])
+  const next = useCallback(() => setImgIdx(i => Math.min(allImages.length - 1, i + 1)), [allImages.length])
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    setImgIdx(0)
+  }, [product.id])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowLeft') prev()
+      if (e.key === 'ArrowRight') next()
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, prev, next])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-10">
-      {/* Very light frosted backdrop — catalog stays visible through it */}
+      {/* Frosted backdrop */}
       <div
         className="absolute inset-0"
         style={{ backdropFilter: 'blur(12px)', background: 'oklch(0.96 0.01 80 / 0.55)' }}
         onClick={onClose}
       />
 
-      {/* Glassmorphic card */}
+      {/* Card */}
       <div
         className="relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl md:flex-row"
         style={{
@@ -41,18 +52,53 @@ export default function ProductModal({ product, selected, onToggle, onClose }: P
           maxHeight: '86vh',
         }}
       >
-        {/* Image */}
+        {/* Image panel — fixed square */}
         <div
           className="relative flex-shrink-0 w-full md:w-[45%]"
-          style={{ background: 'oklch(0.95 0.012 80 / 0.6)', aspectRatio: '1/1' }}
+          style={{ background: 'oklch(0.95 0.012 80 / 0.6)' }}
         >
-          <img
-            src={allImages[imgIdx]}
-            alt={product.name}
-            className="h-full w-full object-contain p-8"
-          />
+          {/* Fixed-ratio image box */}
+          <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+            <div className="absolute inset-0 flex items-center justify-center p-8">
+              {allImages[imgIdx] ? (
+                <img
+                  key={allImages[imgIdx]}
+                  src={allImages[imgIdx]}
+                  alt={product.name}
+                  className="max-h-full max-w-full object-contain"
+                  style={{ transition: 'opacity 0.18s' }}
+                />
+              ) : (
+                <div className="text-sm" style={{ color: 'oklch(0.22 0.02 50 / 0.3)' }}>No image</div>
+              )}
+            </div>
+
+            {/* Arrow buttons */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  onClick={prev}
+                  disabled={imgIdx === 0}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full shadow-sm transition-all disabled:opacity-20 hover:scale-105"
+                  style={{ background: 'oklch(1 0 0 / 0.85)', color: 'oklch(0.22 0.02 50)' }}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  onClick={next}
+                  disabled={imgIdx === allImages.length - 1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full shadow-sm transition-all disabled:opacity-20 hover:scale-105"
+                  style={{ background: 'oklch(1 0 0 / 0.85)', color: 'oklch(0.22 0.02 50)' }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Dot indicators */}
           {allImages.length > 1 && (
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+            <div className="flex justify-center gap-1.5 pb-4">
               {allImages.map((_, i) => (
                 <button
                   key={i}
@@ -67,9 +113,28 @@ export default function ProductModal({ product, selected, onToggle, onClose }: P
               ))}
             </div>
           )}
+
+          {/* Thumbnail strip — shown when 3+ images */}
+          {allImages.length >= 3 && (
+            <div className="flex gap-2 overflow-x-auto px-4 pb-4 scrollbar-none">
+              {allImages.map((src, i) => (
+                <button
+                  key={i}
+                  onClick={() => setImgIdx(i)}
+                  className="flex-shrink-0 h-14 w-14 overflow-hidden rounded-xl transition-all"
+                  style={{
+                    border: `2px solid ${i === imgIdx ? 'oklch(0.22 0.02 50)' : 'transparent'}`,
+                    background: 'oklch(0.92 0.01 80)',
+                  }}
+                >
+                  <img src={src} alt="" className="h-full w-full object-contain p-1" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Info */}
+        {/* Info panel */}
         <div className="flex flex-1 flex-col overflow-y-auto p-7">
           {/* Top row — close + optional link */}
           <div className="flex items-center justify-end gap-1.5 self-end">

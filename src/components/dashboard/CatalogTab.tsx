@@ -1,17 +1,20 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, Eye, EyeOff, Trash2, Plus } from 'lucide-react'
+import { Search, Eye, EyeOff, Trash2, Plus, Pencil } from 'lucide-react'
 import { catalog } from '@/lib/catalog'
 import { categories, type Category } from '@/lib/types'
 import { useUserProducts } from '@/lib/user-products-store'
 import AddWithUrlDialog from '@/components/shared/AddWithUrlDialog'
+import CatalogEditModal from '@/components/dashboard/CatalogEditModal'
+import type { Product } from '@/lib/types'
 
 export default function CatalogTab() {
-  const { products: userProducts, hiddenIds, toggleHidden, remove } = useUserProducts()
+  const { products: userProducts, hiddenIds, toggleHidden, remove, update } = useUserProducts()
   const [query, setQuery] = useState('')
   const [cat, setCat] = useState<Category | ''>('')
   const [addOpen, setAddOpen] = useState(false)
+  const [editing, setEditing] = useState<Product | null>(null)
 
   const allProducts = useMemo(() => {
     const seen = new Set<string>()
@@ -36,7 +39,8 @@ export default function CatalogTab() {
         <p className="text-[10px] uppercase tracking-[0.32em]" style={{ color: 'var(--muted-foreground)' }}>Inventory</p>
         <h1 className="font-serif text-5xl mt-3" style={{ color: 'var(--ink)' }}>Product Catalog</h1>
         <p className="mt-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          Toggle visibility for items in or out of stock. {hiddenCount} hidden · {allProducts.length} total.
+          Toggle visibility · click <strong>Edit</strong> on any user-added product to change its info or images.{' '}
+          {hiddenCount} hidden · {allProducts.length} total.
         </p>
       </header>
 
@@ -99,7 +103,8 @@ export default function CatalogTab() {
                   {hidden ? 'Out of stock' : 'In stock'}
                 </span>
                 {userAdded && (
-                  <span className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.18em]" style={{ background: 'oklch(0.55 0.14 40 / 0.15)', color: 'var(--rust)' }}>
+                  <span className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.18em]"
+                    style={{ background: 'oklch(0.55 0.14 40 / 0.15)', color: 'var(--rust)' }}>
                     Added
                   </span>
                 )}
@@ -110,6 +115,15 @@ export default function CatalogTab() {
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <span className="text-sm font-serif" style={{ color: 'var(--ink)' }}>{p.price}</span>
                   <div className="flex gap-1">
+                    {userAdded && (
+                      <button
+                        onClick={() => setEditing(p)}
+                        className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] transition-colors hover:bg-[var(--ink)] hover:text-[var(--primary-foreground)] hover:border-[var(--ink)]"
+                        style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
+                      >
+                        <Pencil size={11} /> Edit
+                      </button>
+                    )}
                     <button
                       onClick={() => toggleHidden(p.id)}
                       className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] transition-colors hover:bg-[var(--ink)] hover:text-[var(--primary-foreground)] hover:border-[var(--ink)]"
@@ -143,6 +157,14 @@ export default function CatalogTab() {
       )}
 
       <AddWithUrlDialog open={addOpen} onOpenChange={setAddOpen} />
+
+      {editing && (
+        <CatalogEditModal
+          product={editing}
+          onSave={patch => update(editing.id, patch)}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   )
 }
