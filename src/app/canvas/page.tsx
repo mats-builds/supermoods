@@ -10,6 +10,7 @@ import {
   Maximize2, Minimize2,
 } from 'lucide-react'
 import { catalog } from '@/lib/catalog'
+import { allBrandProducts } from '@/lib/brands'
 import { curatedPalettes, generateAIPalette, scenes, colorMap, categories } from '@/lib/types'
 import type { Palette, Scene, Category } from '@/lib/types'
 import { useSelection, selectionStore } from '@/lib/selection-store'
@@ -39,7 +40,7 @@ export default function MoodboardPage() {
 
   const allProducts = useMemo(() => {
     const seen = new Set<string>()
-    return [...userProducts, ...catalog].filter(p => {
+    return [...userProducts, ...allBrandProducts, ...catalog].filter(p => {
       if (seen.has(p.id)) return false; seen.add(p.id); return true
     })
   }, [userProducts])

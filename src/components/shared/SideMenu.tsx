@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { Menu, X, BookOpen, Sparkles, Link2, Plus, Settings, Trash2, ArrowLeft } from 'lucide-react'
+import { Menu, X, BookOpen, Sparkles, Link2, Plus, Settings, Trash2, ArrowLeft, Building2 } from 'lucide-react'
 import { useUserProducts } from '@/lib/user-products-store'
 import AddWithUrlDialog from './AddWithUrlDialog'
 import type { Product } from '@/lib/types'
@@ -57,6 +57,7 @@ export default function SideMenu() {
             {/* Nav */}
             <nav className="flex flex-col px-2 py-4 shrink-0">
               <NavLink href="/" icon={<BookOpen size={16} strokeWidth={1.6} />} onClick={close}>The catalog</NavLink>
+              <NavLink href="/brands" icon={<Building2 size={16} strokeWidth={1.6} />} onClick={close}>Brand catalogs</NavLink>
               <NavLink href="/canvas" icon={<Sparkles size={16} strokeWidth={1.6} />} onClick={close}>Your moodboard</NavLink>
 
               <div className="mx-4 my-3 border-t" style={{ borderColor: 'var(--border)' }} />

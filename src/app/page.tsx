@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Check, X, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
+import { Search, Plus, Check, X, ArrowRight, Building2 } from 'lucide-react'
 import { catalog } from '@/lib/catalog'
 import { categories, type Category } from '@/lib/types'
 import { useSelection } from '@/lib/selection-store'
@@ -121,6 +122,16 @@ export default function CatalogPage() {
               </button>
             )
           })}
+
+          {/* Brand catalogs entry */}
+          <Link
+            href="/brands"
+            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] transition-colors hover:opacity-80"
+            style={{ background: 'var(--rust)', color: 'var(--primary-foreground)' }}
+          >
+            <Building2 size={11} strokeWidth={2} /> Brand catalogs
+          </Link>
+
           <span className="ml-auto text-xs" style={{ color: 'var(--muted-foreground)' }}>
             {items.length} {items.length === 1 ? 'piece' : 'pieces'}
           </span>
