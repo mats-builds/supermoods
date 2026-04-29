@@ -1,0 +1,27 @@
+import type { Product } from "./types"
+
+export const catalog: Product[] = [
+  { id: "demo-sofa", name: "Lina Curved Sofa", maker: "Studio Palerma", price: "€ 4,890", category: "Seating", src: "/assets/sofa.png", colors: ["rust", "walnut"], role: "ground", details: { "Width": "240 cm", "Depth": "95 cm", "Height": "78 cm", "Material": "Fabric, solid wood" } },
+  { id: "demo-sofa-cataline", name: "Cataline 3-piece Modular Sofa", maker: "SKLUM", price: "€ 1,099", category: "Seating", src: "/assets/sofa-cataline.png", colors: ["cream", "linen", "bone"], role: "ground", gallery: ["/assets/sofa-cataline-2.jpg", "/assets/sofa-cataline-3.jpg"] },
+  { id: "demo-sofa-fogler", name: "Fogler Sofa", maker: "Fogler Studio", price: "€ 3,200", category: "Seating", src: "/assets/sofa-fogler.png", colors: ["linen", "bone", "cream"], role: "ground", gallery: ["/assets/sofa-fogler-1.jpg", "/assets/sofa-fogler-2.jpg"] },
+  { id: "demo-armchair", name: "Cane Sling Chair", maker: "Hanssen Workshop", price: "€ 1,680", category: "Seating", src: "/assets/armchair.png", colors: ["walnut", "clay"], role: "ground", details: { "Width": "72 cm", "Material": "Rattan, walnut" } },
+  { id: "demo-loungechair", name: "Bouclé Lounge", maker: "Maison Cru", price: "€ 1,420", category: "Seating", src: "/assets/loungechair.png", colors: ["cream", "linen"], role: "ground" },
+  { id: "demo-ottoman", name: "Linen Pouf", maker: "Maison Cru", price: "€ 320", category: "Seating", src: "/assets/ottoman.png", colors: ["linen", "bone"], role: "surface" },
+  { id: "demo-chair-olea", name: "Olea Dining Chair", maker: "Casa Reni", price: "€ 890", category: "Seating", src: "/assets/chair-olea.png", colors: ["walnut", "cream"], role: "ground", gallery: ["/assets/chair-olea-1.jpg", "/assets/chair-olea-2.jpg"] },
+  { id: "demo-chair-jolie", name: "Jolie Accent Chair", maker: "Atelier Dion", price: "€ 1,140", category: "Seating", src: "/assets/chair-jolie.png", colors: ["rust", "linen"], role: "ground", gallery: ["/assets/chair-jolie-1.jpg", "/assets/chair-jolie-2.jpg"] },
+  { id: "demo-table", name: "Oval Travertine Table", maker: "Casa Reni", price: "€ 2,150", category: "Tables", src: "/assets/table.png", colors: ["travertine", "bone"], role: "surface", details: { "Length": "180 cm", "Material": "Travertine, steel" } },
+  { id: "demo-sidetable", name: "Stone Side Table", maker: "Casa Reni", price: "€ 690", category: "Tables", src: "/assets/sidetable.png", colors: ["travertine", "cream"], role: "surface" },
+  { id: "demo-sideboard", name: "Walnut Sideboard", maker: "Northwood", price: "€ 3,240", category: "Storage", src: "/assets/sideboard.png", colors: ["walnut", "rust"], role: "ground", details: { "Width": "180 cm", "Material": "Solid walnut" } },
+  { id: "demo-shelf", name: "Slim Walnut Shelf", maker: "Northwood", price: "€ 1,980", category: "Storage", src: "/assets/shelf.png", colors: ["walnut"], role: "ground" },
+  { id: "demo-lamp", name: "Pleated Floor Lamp", maker: "Brass + Linen Co.", price: "€ 920", category: "Lighting", src: "/assets/lamp.png", colors: ["linen", "brass"], role: "standing", details: { "Height": "160 cm", "Material": "Brass, linen shade" } },
+  { id: "demo-pendant", name: "Walnut Pendant 02", maker: "Northwood", price: "€ 740", category: "Lighting", src: "/assets/pendant.png", colors: ["walnut", "brass"], role: "hanging" },
+  { id: "demo-candles", name: "Brass Candle Trio", maker: "Atelier Dion", price: "€ 240", category: "Lighting", src: "/assets/candles.png", colors: ["brass", "gold"], role: "prop" },
+  { id: "demo-vase", name: "Onda Vase, Charcoal", maker: "Ceramica Vera", price: "€ 220", category: "Decor", src: "/assets/vase.png", colors: ["charcoal", "ink"], role: "prop" },
+  { id: "demo-pampas", name: "Pampas Arrangement", maker: "Ceramica Vera", price: "€ 180", category: "Decor", src: "/assets/pampas.png", colors: ["bone", "jute"], role: "standing" },
+  { id: "demo-books", name: "Linen Library, set of 4", maker: "Atelier Dion", price: "€ 140", category: "Decor", src: "/assets/books.png", colors: ["cream", "clay"], role: "prop" },
+  { id: "demo-mirror", name: "Halo Brass Mirror", maker: "Atelier Dion", price: "€ 880", category: "Decor", src: "/assets/mirror.png", colors: ["brass", "gold"], role: "wall" },
+  { id: "demo-pillows", name: "Linen Cushions, pair", maker: "Maison Cru", price: "€ 180", category: "Textiles", src: "/assets/pillows.png", colors: ["linen", "cream"], role: "prop" },
+  { id: "demo-rug", name: "Hand-woven Jute Rug", maker: "Hanssen Workshop", price: "€ 1,260", category: "Textiles", src: "/assets/rug.png", colors: ["jute", "cream"], role: "floor", details: { "Size": "200 × 300 cm", "Material": "Jute, cotton" } },
+  { id: "demo-art", name: "Figure I, Framed", maker: "Atelier Dion", price: "€ 1,240", category: "Art", src: "/assets/art.png", colors: ["bone", "gold", "ink"], role: "wall", details: { "Size": "80 × 100 cm", "Medium": "Archival giclée" } },
+  { id: "demo-art2", name: "Earthforms II", maker: "Atelier Dion", price: "€ 680", category: "Art", src: "/assets/art2.png", colors: ["terracotta", "cream", "clay"], role: "wall" },
+]
