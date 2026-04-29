@@ -3,18 +3,20 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { BarChart3, Users, Package, Download, ArrowLeft, Sparkles, LogOut } from 'lucide-react'
+import { BarChart3, Users, Package, Download, ArrowLeft, Sparkles, LogOut, Link2, Monitor } from 'lucide-react'
 import OverviewTab from '@/components/dashboard/OverviewTab'
 import LeadFeedTab from '@/components/dashboard/LeadFeedTab'
 import CatalogTab from '@/components/dashboard/CatalogTab'
 import ImportTab from '@/components/dashboard/ImportTab'
+import AdditionsTab from '@/components/dashboard/AdditionsTab'
 
-type Tab = 'overview' | 'leads' | 'catalog' | 'import'
+type Tab = 'overview' | 'leads' | 'catalog' | 'additions' | 'import'
 
 const NAV: { id: Tab; label: string; Icon: typeof BarChart3 }[] = [
   { id: 'overview', label: 'Overview', Icon: BarChart3 },
   { id: 'leads', label: 'Lead Feed', Icon: Users },
   { id: 'catalog', label: 'Catalog', Icon: Package },
+  { id: 'additions', label: 'Additions', Icon: Link2 },
   { id: 'import', label: 'Bulk Import', Icon: Download },
 ]
 
@@ -57,13 +59,23 @@ export default function AtelierDashboard() {
           <p className="font-serif text-3xl mt-1" style={{ color: 'var(--ink)' }}>Atelier</p>
         </div>
 
-        <Link
-          href="/"
-          className="mb-6 flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all hover:shadow-sm"
-          style={{ borderColor: 'var(--border)', background: 'var(--background)', color: 'var(--ink)' }}
-        >
-          <ArrowLeft size={14} /> Back to app
-        </Link>
+        <div className="mb-6 flex flex-col gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all hover:shadow-sm"
+            style={{ borderColor: 'var(--border)', background: 'var(--background)', color: 'var(--ink)' }}
+          >
+            <ArrowLeft size={14} /> Back to app
+          </Link>
+          <Link
+            href="/kiosk"
+            target="_blank"
+            className="flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all hover:shadow-sm"
+            style={{ borderColor: 'var(--border)', background: 'var(--background)', color: 'var(--ink)' }}
+          >
+            <Monitor size={14} /> Open kiosk view
+          </Link>
+        </div>
 
         <nav className="flex flex-col gap-1">
           {NAV.map(({ id, label, Icon }) => {
@@ -131,6 +143,7 @@ export default function AtelierDashboard() {
           {tab === 'overview' && <OverviewTab />}
           {tab === 'leads' && <LeadFeedTab />}
           {tab === 'catalog' && <CatalogTab />}
+          {tab === 'additions' && <AdditionsTab />}
           {tab === 'import' && <ImportTab />}
         </div>
       </main>
