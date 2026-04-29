@@ -8,18 +8,25 @@ import { catalog } from '@/lib/catalog'
 import { curatedPalettes, generateAIPalette, scenes, colorMap } from '@/lib/types'
 import type { Palette, Scene } from '@/lib/types'
 import { useSelection, selectionStore } from '@/lib/selection-store'
+import { useUserProducts } from '@/lib/user-products-store'
 import { RoomScene } from '@/components/canvas/RoomScene'
 import SideMenu from '@/components/shared/SideMenu'
 
 export default function MoodboardPage() {
   const router = useRouter()
   const { ids, paletteId, setPaletteId, sceneId, setSceneId, layout, setLayoutFor, resetLayoutFor, resetAllLayout } = useSelection()
+  const { products: userProducts } = useUserProducts()
   const [editMode, setEditMode] = useState(false)
   const [aiNonce, setAiNonce] = useState(0)
 
-  const items = useMemo(() => ids.map(id => catalog.find(p => p.id === id)).filter(Boolean) as typeof catalog, [ids])
+  const allProducts = useMemo(() => {
+    const seen = new Set<string>()
+    return [...userProducts, ...catalog].filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true })
+  }, [userProducts])
 
-  const aiPalette = useMemo(() => generateAIPalette(ids, catalog), [ids, aiNonce])
+  const items = useMemo(() => ids.map(id => allProducts.find(p => p.id === id)).filter(Boolean) as typeof catalog, [ids, allProducts])
+
+  const aiPalette = useMemo(() => generateAIPalette(ids, allProducts), [ids, allProducts, aiNonce])
   const allPalettes: Palette[] = useMemo(() => [aiPalette, ...curatedPalettes], [aiPalette, aiNonce])
   const activePalette: Palette = allPalettes.find(p => p.id === paletteId) ?? aiPalette
   const activeScene: Scene = scenes.find(s => s.id === sceneId) ?? scenes[0]

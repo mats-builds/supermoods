@@ -15,6 +15,10 @@
   --shadow-soft: var(--shadow-soft-val);
 }
 
+html {
+  zoom: 0.9;
+}
+
 :root {
   --background: oklch(0.97 0.012 75);
   --foreground: oklch(0.22 0.02 50);

@@ -7,6 +7,7 @@ import { catalog } from '@/lib/catalog'
 import { curatedPalettes, generateAIPalette, scenes, colorMap } from '@/lib/types'
 import type { Palette, Scene } from '@/lib/types'
 import { useSelection } from '@/lib/selection-store'
+import { useUserProducts } from '@/lib/user-products-store'
 import { RoomScene } from '@/components/canvas/RoomScene'
 import LeadCaptureModal from '@/components/shared/LeadCaptureModal'
 
@@ -19,12 +20,18 @@ function getStoredLead(): StoredLead | null {
 
 export default function PresentPage() {
   const { ids, paletteId, sceneId, layout } = useSelection()
+  const { products: userProducts } = useUserProducts()
   const [hidden, setHidden] = useState<Record<string, boolean>>({})
   const [leadOpen, setLeadOpen] = useState(false)
   const [sentTo, setSentTo] = useState<StoredLead | null>(null)
 
-  const items = useMemo(() => ids.map(id => catalog.find(p => p.id === id)).filter(Boolean) as typeof catalog, [ids])
-  const aiPalette = useMemo(() => generateAIPalette(ids, catalog), [ids])
+  const allProducts = useMemo(() => {
+    const seen = new Set<string>()
+    return [...userProducts, ...catalog].filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true })
+  }, [userProducts])
+
+  const items = useMemo(() => ids.map(id => allProducts.find(p => p.id === id)).filter(Boolean) as typeof catalog, [ids, allProducts])
+  const aiPalette = useMemo(() => generateAIPalette(ids, allProducts), [ids, allProducts])
   const allPalettes: Palette[] = useMemo(() => [aiPalette, ...curatedPalettes], [aiPalette])
   const activePalette: Palette = allPalettes.find(p => p.id === paletteId) ?? aiPalette
   const activeScene: Scene = scenes.find(s => s.id === sceneId) ?? scenes[0]
