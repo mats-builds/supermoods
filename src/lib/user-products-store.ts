@@ -67,16 +67,18 @@ export const userProductsStore = {
 }
 
 export function useUserProducts() {
+  const [mounted, setMounted] = useState(false)
   const [, force] = useState(0)
   useEffect(() => {
     userProductsStore.hydrate()
-    force(n => n + 1)
+    setMounted(true)
     const unsub = userProductsStore.subscribe(() => force(n => n + 1))
     return unsub
   }, [])
   return {
-    products: userProductsStore.list(),
-    hiddenIds: userProductsStore.hiddenIds(),
+    // Return empty arrays until mounted so server and client first-render match
+    products: mounted ? userProductsStore.list() : [],
+    hiddenIds: mounted ? userProductsStore.hiddenIds() : new Set<string>(),
     add: (p: Product) => userProductsStore.add(p),
     remove: (id: string) => userProductsStore.remove(id),
     update: (id: string, patch: Partial<Product>) => userProductsStore.update(id, patch),
