@@ -183,13 +183,14 @@ export default function ProductModal({ product, selected, onToggle, onClose }: P
             </p>
           )}
 
-          {/* Add to board — pushed to bottom */}
-          <button
+          {/* Add to board — always pinned to the bottom */}
+          <div className="mt-auto pt-10">
+            <button
             onClick={() => { onToggle(); onClose() }}
-            className="mt-auto flex items-center justify-center gap-2 rounded-full py-4 text-sm font-medium tracking-wide transition-transform hover:scale-[1.02]"
+            className="flex w-full items-center justify-center gap-2 rounded-full py-4 text-sm font-medium tracking-wide transition-transform hover:scale-[1.02]"
             style={selected
-              ? { background: 'oklch(0.22 0.02 50 / 0.07)', color: 'oklch(0.22 0.02 50)', marginTop: '2.5rem' }
-              : { background: 'oklch(0.52 0.13 40)', color: '#fff', marginTop: '2.5rem' }
+              ? { background: 'oklch(0.22 0.02 50 / 0.07)', color: 'oklch(0.22 0.02 50)' }
+              : { background: 'oklch(0.52 0.13 40)', color: '#fff' }
             }
           >
             {selected
@@ -197,6 +198,7 @@ export default function ProductModal({ product, selected, onToggle, onClose }: P
               : <><Plus size={16} /> Add to board</>
             }
           </button>
+          </div>
         </div>
       </div>
     </div>
