@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Search, Plus, Check, X, RotateCcw } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, Plus, Check, X, RotateCcw, ArrowRight } from 'lucide-react'
 import { catalog } from '@/lib/catalog'
 import { categories, type Category } from '@/lib/types'
 import { useUserProducts } from '@/lib/user-products-store'
@@ -12,6 +13,7 @@ import type { Product } from '@/lib/types'
 const IDLE_MS = 3 * 60 * 1000
 
 export default function KioskPage() {
+  const router = useRouter()
   const { products: userProducts, hiddenIds } = useUserProducts()
   const [filter, setFilter] = useState<Category | 'All'>('All')
   const [query, setQuery] = useState('')
@@ -62,6 +64,15 @@ export default function KioskPage() {
 
   function toggle(id: string) {
     setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+
+  function startMoodboard() {
+    // Push selected IDs into the shared selectionStore, then navigate
+    import('@/lib/selection-store').then(({ selectionStore }) => {
+      selectionStore.clear()
+      Array.from(selected).forEach(id => selectionStore.toggle(id))
+      router.push('/canvas')
+    })
   }
 
   // Hidden exit: tap the logo 5 times
@@ -230,9 +241,13 @@ export default function KioskPage() {
               Clear
             </button>
           </div>
-          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            Ask a staff member to continue
-          </p>
+          <button
+            onClick={startMoodboard}
+            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-transform hover:scale-[1.02]"
+            style={{ background: 'var(--rust)', color: 'var(--primary-foreground)' }}
+          >
+            Create moodboard <ArrowRight size={16} />
+          </button>
         </div>
       </div>
 
