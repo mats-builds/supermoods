@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Check, ArrowRight, ExternalLink } from 'lucide-react'
@@ -16,6 +16,7 @@ export default function BrandPage({ params }: { params: Promise<{ slug: string }
   const router = useRouter()
   const { has, toggle, count, clear } = useSelection()
   const [active, setActive] = useState<Product | null>(null)
+  const [catFilter, setCatFilter] = useState<string>('All')
 
   if (!brand) {
     return (
@@ -30,22 +31,41 @@ export default function BrandPage({ params }: { params: Promise<{ slug: string }
 
   const products = brandProducts(brand)
 
+  // Unique categories derived from this brand's products
+  const productCats = useMemo(() => {
+    const seen = new Set<string>()
+    products.forEach(p => seen.add(p.category))
+    return Array.from(seen)
+  }, [products])
+
+  // Breadcrumb category line e.g. "SEATING & TABLES & LIGHTING"
+  const catBreadcrumb = productCats.join(' & ').toUpperCase()
+
+  // Filtered product list
+  const filteredProducts = useMemo(
+    () => catFilter === 'All' ? products : products.filter(p => p.category === catFilter),
+    [products, catFilter],
+  )
+
+  // External link: first product's sourceUrl if available
+  const siteUrl = products[0]?.sourceUrl
+
   return (
     <main className="min-h-screen pb-32">
       {/* Header */}
       <header
         className="sticky top-0 z-30 border-b backdrop-blur-md"
-        style={{ borderColor: 'var(--border)', background: 'var(--background)/85' }}
+        style={{ borderColor: 'var(--border)', background: 'color-mix(in oklch, var(--background) 85%, transparent)' }}
       >
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
           <div className="flex items-center gap-3">
             <SideMenu />
             <Link
               href="/brands"
-              className="hidden items-center gap-1.5 text-[11px] uppercase tracking-display transition-opacity hover:opacity-70 md:flex"
+              className="hidden items-center gap-1.5 text-[11px] uppercase tracking-display transition-opacity hover:opacity-60 md:flex"
               style={{ color: 'var(--muted-foreground)' }}
             >
-              <ArrowLeft size={12} strokeWidth={1.8} /> Brand Catalogs
+              <ArrowLeft size={11} strokeWidth={2} /> Brand Catalogs
             </Link>
           </div>
 
@@ -64,75 +84,130 @@ export default function BrandPage({ params }: { params: Promise<{ slug: string }
         </div>
       </header>
 
-      {/* Brand hero */}
-      <section
-        className="border-b"
-        style={{ borderColor: 'var(--border)' }}
-      >
-        <div className="mx-auto max-w-[1500px] px-6 py-16 md:px-10 md:py-20">
-          <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-2xl">
-              {/* Accent line */}
-              {brand.accentColor && (
-                <div
-                  className="mb-6 h-0.5 w-12 rounded-full"
-                  style={{ background: brand.accentColor }}
-                />
-              )}
+      {/* ── Brand hero ─────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-[1500px] px-6 py-12 md:px-10 md:py-16">
+        <div className="flex items-start gap-10">
+
+          {/* Logo tile */}
+          <div
+            className="hidden md:flex aspect-square w-[220px] shrink-0 flex-col items-center justify-center rounded-2xl p-8"
+            style={{ background: 'var(--secondary)' }}
+          >
+            <p
+              className="font-serif text-center text-2xl leading-snug"
+              style={{ color: 'var(--ink)' }}
+            >
+              {brand.name}
+            </p>
+            <div
+              className="my-4 h-px w-10"
+              style={{ background: 'var(--border)' }}
+            />
+            {brand.foundedYear && (
               <p
-                className="text-xs uppercase tracking-display"
+                className="text-[10px] uppercase tracking-[0.22em]"
                 style={{ color: 'var(--muted-foreground)' }}
               >
-                {brand.origin} · {brand.pieceCount} pieces
+                since {brand.foundedYear}
               </p>
-              <h1
-                className="mt-3 font-serif text-5xl leading-[0.95] md:text-7xl"
-                style={{ color: 'var(--ink)' }}
-              >
-                {brand.name}
-              </h1>
-              <p
-                className="mt-4 font-serif text-lg italic font-light md:text-xl"
-                style={{ color: brand.accentColor ?? 'var(--rust)' }}
-              >
-                {brand.tagline}
-              </p>
-            </div>
+            )}
+          </div>
+
+          {/* Brand info */}
+          <div className="flex-1 pt-1">
+            {/* Meta breadcrumb */}
             <p
-              className="max-w-sm text-sm leading-relaxed md:text-right"
+              className="text-[10px] uppercase tracking-[0.22em]"
+              style={{ color: 'var(--muted-foreground)' }}
+            >
+              {catBreadcrumb && `${catBreadcrumb} · `}{brand.origin.toUpperCase()}
+            </p>
+
+            {/* Brand name */}
+            <h1
+              className="mt-3 font-serif text-5xl leading-[0.95] md:text-7xl"
+              style={{ color: 'var(--ink)' }}
+            >
+              {brand.name}
+            </h1>
+
+            {/* Description */}
+            <p
+              className="mt-5 max-w-xl text-sm leading-relaxed"
               style={{ color: 'var(--muted-foreground)' }}
             >
               {brand.description}
             </p>
+
+            {/* Status + website */}
+            <div className="mt-6 flex items-center gap-5">
+              <span
+                className="text-[10px] uppercase tracking-[0.22em]"
+                style={{ color: 'var(--rust)' }}
+              >
+                In stock · Ready to compose
+              </span>
+              {siteUrl && (
+                <a
+                  href={siteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.18em] transition-opacity hover:opacity-60"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  Visit website <ExternalLink size={10} />
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Product grid */}
-      <section className="mx-auto mt-10 max-w-[1500px] px-6 md:px-10">
-        <div className="mb-8 flex items-center justify-between border-b pb-5" style={{ borderColor: 'var(--border)' }}>
-          <p
-            className="text-[11px] uppercase tracking-display"
+      {/* ── Category filter bar ─────────────────────────────────────────── */}
+      <section
+        className="mx-auto max-w-[1500px] border-t px-6 md:px-10"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <div className="flex items-center gap-2 py-5">
+          {/* All pill */}
+          <button
+            onClick={() => setCatFilter('All')}
+            className="rounded-full px-5 py-2 text-[11px] uppercase tracking-[0.2em] transition-colors"
+            style={catFilter === 'All'
+              ? { background: 'var(--ink)', color: 'var(--primary-foreground)' }
+              : { border: '1px solid var(--border)', color: 'var(--muted-foreground)' }
+            }
+          >
+            All
+          </button>
+
+          {productCats.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCatFilter(cat)}
+              className="rounded-full px-5 py-2 text-[11px] uppercase tracking-[0.2em] transition-colors"
+              style={catFilter === cat
+                ? { background: 'var(--ink)', color: 'var(--primary-foreground)' }
+                : { border: '1px solid var(--border)', color: 'var(--muted-foreground)' }
+              }
+            >
+              {cat}
+            </button>
+          ))}
+
+          <span
+            className="ml-auto text-xs"
             style={{ color: 'var(--muted-foreground)' }}
           >
-            {products.length} {products.length === 1 ? 'piece' : 'pieces'}
-          </p>
-          {/* External link if it's a real brand with a sourceUrl */}
-          {products[0]?.sourceUrl && (
-            <a
-              href={products[0].sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-display transition-opacity hover:opacity-70"
-              style={{ color: 'var(--muted-foreground)' }}
-            >
-              Visit website <ExternalLink size={11} />
-            </a>
-          )}
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'piece' : 'pieces'}
+          </span>
         </div>
+      </section>
 
+      {/* ── Product grid ────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-[1500px] px-6 pb-10 pt-8 md:px-10">
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map(p => {
+          {filteredProducts.map(p => {
             const selected = has(p.id)
             return (
               <article key={p.id} className="group relative">
@@ -195,7 +270,7 @@ export default function BrandPage({ params }: { params: Promise<{ slug: string }
         </div>
       </section>
 
-      {/* Sticky board footer */}
+      {/* ── Sticky board footer ─────────────────────────────────────────── */}
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-6">
         <div
           className={`pointer-events-auto mx-auto flex max-w-3xl items-center justify-between gap-4 rounded-full border px-3 py-3 pl-6 backdrop-blur-md transition-all duration-300 ${

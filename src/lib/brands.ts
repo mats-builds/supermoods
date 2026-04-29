@@ -10,6 +10,7 @@ export type Brand = {
   coverImage?: string          // optional hero image
   accentColor?: string         // oklch color string
   pieceCount: number
+  foundedYear?: number         // shown in logo tile
   makers?: string[]            // demo brands: match by maker in catalog
   products?: Product[]         // real brands: explicit product list
   logoFit?: 'cover' | 'contain'
@@ -25,6 +26,7 @@ export const brands: Brand[] = [
     origin: 'Milan · Italy',
     description: 'Studio Palerma was founded in 2012 by architect Luca Palerma with a singular belief: that furniture should carry the same formal rigour as architecture. Every piece begins as a drawing, resolved for weeks before a prototype is ever built. The result is a range of sofas, chairs and tables that balance taut geometry with sensory warmth — curved backs upholstered in bespoke bouclés, travertine legs cast in the studio’s own workshop.',
     accentColor: 'oklch(0.55 0.14 40)',
+    foundedYear: 2012,
     makers: ['Studio Palerma'],
     pieceCount: 1,
   },
@@ -35,6 +37,7 @@ export const brands: Brand[] = [
     origin: 'Paris · France',
     description: 'Atelier Dion sits at the intersection of fine art and functional design. Founded by Isabelle Dion in a Marais courtyard, the atelier produces limited runs of mirrors, candle holders, framed works and accent furniture — each piece numbered and accompanied by a certificate of provenance. Their brass work has become a signature: hand-patinated in-house, never lacquered, meant to develop a living finish over decades.',
     accentColor: 'oklch(0.74 0.09 80)',
+    foundedYear: 2009,
     makers: ['Atelier Dion'],
     pieceCount: 7,
   },
@@ -45,6 +48,7 @@ export const brands: Brand[] = [
     origin: 'Oslo · Norway',
     description: 'Northwood was born out of frustration with flatpack. Three Norwegian cabinetmakers left a large furniture group in 2008 to open a small joinery in Grünerløkka. Every shelf, sideboard and pendant they produce is made from FSC-certified walnut, oak and ash — mortise-and-tenon jointed, finished with natural oils. Nothing is glued where it can be pinned. Nothing is pinned where it can be joined.',
     accentColor: 'oklch(0.34 0.05 50)',
+    foundedYear: 2008,
     makers: ['Northwood'],
     pieceCount: 3,
   },
@@ -55,6 +59,7 @@ export const brands: Brand[] = [
     origin: 'Barcelona · Spain',
     description: 'Casa Reni draws on the textures of the Mediterranean coast — travertine quarried outside Rome, linen woven in Catalonia, steel welded in a Barcelona workshop the founders have occupied since 1997. Their dining tables are some of the most copied silhouettes in European interiors. The originals are distinguished by a hairline seam running the length of every slab, left visible as a mark of authenticity.',
     accentColor: 'oklch(0.86 0.025 75)',
+    foundedYear: 1997,
     makers: ['Casa Reni'],
     pieceCount: 3,
   },
@@ -65,6 +70,7 @@ export const brands: Brand[] = [
     origin: 'Porto · Portugal',
     description: 'Ceramica Vera occupies a former tile factory on the outskirts of Porto. Three kilns run continuously, firing at a pace dictated by the clay rather than a production schedule. Every vase, bowl and sculptural object is thrown by hand — no moulds — which means every piece carries the fingerprints of its maker. Vera Sousa started the studio in 2003 after training at the Royal College of Art; she still throws every morning before the studio day begins.',
     accentColor: 'oklch(0.28 0.01 60)',
+    foundedYear: 2003,
     makers: ['Ceramica Vera'],
     pieceCount: 2,
   },
@@ -75,6 +81,7 @@ export const brands: Brand[] = [
     origin: 'Copenhagen · Denmark',
     description: 'Maison Nord is a Copenhagen-based lifestyle brand with a straightforward philosophy: that a home should feel like a long exhale. Their collection spans upholstered seating, hand-woven textiles and rattan pieces, all developed with a small circle of Scandinavian craftspeople. The palette rarely strays from cream, linen and bone — colours that hold light without competing with it.',
     accentColor: 'oklch(0.94 0.018 80)',
+    foundedYear: 2015,
     makers: ['Maison Cru', 'Hanssen Workshop'],
     pieceCount: 5,
   },
@@ -88,6 +95,7 @@ export const brands: Brand[] = [
     description: 'Sinds 2006 is De Machinekamer hét adres in Haarlem voor vintage en nieuwe design meubels en woonaccessoires. In de voormalige machinekamer van een historische fabriek presenteren wij een zorgvuldig samengestelde collectie van toonaangevende Europese merken, naast exclusieve eigen ontwerpen. Onze filosofie is eenvoudig: stukken die de tand des tijds doorstaan — in materiaal, vakmanschap en esthetiek.',
     accentColor: 'oklch(0.52 0.13 40)',
     logoFit: 'contain',
+    foundedYear: 2006,
     pieceCount: 24,
     products: [
       { id: 'dmk-sofa-ronde', name: 'Model Ronde Bank', maker: 'De Machinekamer', price: '€ 2,490', category: 'Seating', src: '/assets/sofa.png', colors: ['linen', 'cream'], role: 'ground', sourceUrl: 'https://www.demachinekamer.nl' },
