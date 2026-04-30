@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import AccountSync from "@/components/auth/AccountSync";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen antialiased">
+        <AccountSync />
         {children}
       </body>
     </html>

@@ -3,17 +3,21 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { Menu, X, BookOpen, Sparkles, Link2, Plus, Settings, Trash2, ArrowLeft, Building2 } from 'lucide-react'
+import { Menu, X, BookOpen, Sparkles, Link2, Plus, Settings, Trash2, ArrowLeft, Building2, User, LogOut } from 'lucide-react'
 import { useUserProducts } from '@/lib/user-products-store'
+import { useAuth } from '@/lib/auth'
 import AddWithUrlDialog from './AddWithUrlDialog'
+import AuthModal from '@/components/auth/AuthModal'
 import type { Product } from '@/lib/types'
 
 export default function SideMenu() {
   const [open, setOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [authOpen, setAuthOpen] = useState(false)
   const [view, setView] = useState<'menu' | 'all'>('menu')
   const [mounted, setMounted] = useState(false)
   const { products, remove } = useUserProducts()
+  const { user, signOut } = useAuth()
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -61,6 +65,31 @@ export default function SideMenu() {
               <NavLink href="/canvas" icon={<Sparkles size={16} strokeWidth={1.6} />} onClick={close}>Your moodboard</NavLink>
 
               <div className="mx-4 my-3 border-t" style={{ borderColor: 'var(--border)' }} />
+
+              {/* Account */}
+              {user ? (
+                <div className="flex items-center gap-3 rounded-2xl px-4 py-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-medium" style={{ background: 'var(--ink)', color: 'var(--primary-foreground)' }}>
+                    {(user.email ?? '?').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs" style={{ color: 'var(--ink)' }}>{user.email}</p>
+                    <Link href="/account" onClick={close} className="text-[10px] hover:underline" style={{ color: 'var(--rust)' }}>My account →</Link>
+                  </div>
+                  <button onClick={() => { signOut(); close() }} title="Sign out" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--secondary)]" style={{ color: 'var(--muted-foreground)' }}>
+                    <LogOut size={13} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { close(); setTimeout(() => setAuthOpen(true), 150) }}
+                  className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition-colors hover:bg-[var(--secondary)]"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  <User size={16} strokeWidth={1.6} />
+                  <span>Sign in / Create account</span>
+                </button>
+              )}
 
               <Link
                 href="/atelier"
@@ -126,6 +155,7 @@ export default function SideMenu() {
       {open && drawer}
 
       <AddWithUrlDialog open={addOpen} onOpenChange={setAddOpen} />
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </>
   )
 }
