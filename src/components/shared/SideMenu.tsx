@@ -155,7 +155,10 @@ export default function SideMenu() {
       {open && drawer}
 
       <AddWithUrlDialog open={addOpen} onOpenChange={setAddOpen} />
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+      {mounted && authOpen && createPortal(
+        <AuthModal onClose={() => setAuthOpen(false)} />,
+        document.body
+      )}
     </>
   )
 }
