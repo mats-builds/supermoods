@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createServiceClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   const { email, password, name, store_name, website_url } = await req.json()
@@ -11,27 +10,24 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createClient()
 
-  // Create the Supabase Auth user
+  // Sign up — Supabase sends confirmation email
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${req.nextUrl.origin}/api/auth/callback`,
+      // Pass profile data as metadata so the DB trigger can create the store_profile
+      data: { name, store_name, website_url: website_url || null },
     },
   })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
   const userId = data.user?.id
-  if (!userId) {
-    return NextResponse.json({ error: 'User creation failed' }, { status: 500 })
-  }
+  if (!userId) return NextResponse.json({ error: 'User creation failed' }, { status: 500 })
 
-  // Insert store profile using service role (bypasses RLS during signup)
-  const service = createServiceClient()
-  const { error: profileError } = await service
+  // Insert store_profile — works because the user is now signed in (session returned by signUp)
+  const { error: profileError } = await supabase
     .from('store_profiles')
     .insert({ id: userId, name, store_name, website_url: website_url || null })
 

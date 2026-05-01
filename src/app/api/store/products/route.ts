@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireOwner, isUnauthorized } from '@/lib/supabase/auth-helpers'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
-export async function GET(req: NextRequest) {
-  const ctx = await requireOwner()
-  if (isUnauthorized(ctx)) return ctx
+async function getAuthedClient() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  return { supabase, userId: user.id }
+}
 
-  const service = createServiceClient()
-  const { data, error } = await service
+export async function GET() {
+  const ctx = await getAuthedClient()
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data, error } = await ctx.supabase
     .from('store_products')
     .select('*')
-    .eq('store_id', ctx.storeId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
@@ -19,15 +23,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const ctx = await requireOwner()
-  if (isUnauthorized(ctx)) return ctx
+  const ctx = await getAuthedClient()
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const service = createServiceClient()
-
-  const { data, error } = await service
+  const { data, error } = await ctx.supabase
     .from('store_products')
-    .insert({ ...body, store_id: ctx.storeId })
+    .insert({ ...body, store_id: ctx.userId })
     .select()
     .single()
 
@@ -36,18 +38,16 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const ctx = await requireOwner()
-  if (isUnauthorized(ctx)) return ctx
+  const ctx = await getAuthedClient()
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id, ...updates } = await req.json()
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
-  const service = createServiceClient()
-  const { data, error } = await service
+  const { data, error } = await ctx.supabase
     .from('store_products')
     .update(updates)
     .eq('id', id)
-    .eq('store_id', ctx.storeId) // ownership check
     .select()
     .single()
 
@@ -56,18 +56,16 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const ctx = await requireOwner()
-  if (isUnauthorized(ctx)) return ctx
+  const ctx = await getAuthedClient()
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await req.json()
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
-  const service = createServiceClient()
-  const { error } = await service
+  const { error } = await ctx.supabase
     .from('store_products')
     .delete()
     .eq('id', id)
-    .eq('store_id', ctx.storeId) // ownership check
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })

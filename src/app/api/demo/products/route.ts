@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET() {
-  const service = createServiceClient()
-  const { data, error } = await service
+  const supabase = await createClient()
+  const { data, error } = await supabase
     .from('demo_products')
     .select('*')
     .eq('visible', true)

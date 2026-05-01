@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireOwner, isUnauthorized } from '@/lib/supabase/auth-helpers'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 const DEFAULTS = { link_duration_days: 14 }
 
 export async function GET() {
-  const ctx = await requireOwner()
-  if (isUnauthorized(ctx)) return ctx
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const service = createServiceClient()
-  const { data } = await service
+  const { data } = await supabase
     .from('store_settings')
     .select('key, value')
-    .eq('store_id', ctx.storeId)
+    .eq('store_id', user.id)
 
   const settings = { ...DEFAULTS }
   for (const row of data ?? []) {
@@ -24,19 +23,19 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const ctx = await requireOwner()
-  if (isUnauthorized(ctx)) return ctx
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { link_duration_days } = await req.json()
   if (typeof link_duration_days !== 'number' || link_duration_days < 1 || link_duration_days > 365) {
     return NextResponse.json({ error: 'link_duration_days must be 1–365' }, { status: 400 })
   }
 
-  const service = createServiceClient()
-  const { error } = await service
+  const { error } = await supabase
     .from('store_settings')
     .upsert({
-      store_id: ctx.storeId,
+      store_id: user.id,
       key: 'link_duration_days',
       value: String(link_duration_days),
       updated_at: new Date().toISOString(),

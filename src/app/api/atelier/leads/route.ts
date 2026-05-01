@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server'
-import { requireOwner, isUnauthorized } from '@/lib/supabase/auth-helpers'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET() {
-  const ctx = await requireOwner()
-  if (isUnauthorized(ctx)) return ctx
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const service = createServiceClient()
-
-  const { data: leads, error } = await service
+  const { data: leads, error } = await supabase
     .from('leads')
     .select(`
       id, name, email, created_at,
       sessions!inner(id, magic_link_token),
       boards:sessions(boards(id, total_value, backdrop, palette, canvas_state))
     `)
-    .eq('store_id', ctx.storeId)
+    .eq('store_id', user.id)
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

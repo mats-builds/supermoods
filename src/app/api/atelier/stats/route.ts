@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server'
-import { requireOwner, isUnauthorized } from '@/lib/supabase/auth-helpers'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET() {
-  const ctx = await requireOwner()
-  if (isUnauthorized(ctx)) return ctx
-
-  const service = createServiceClient()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const [leadsRes, boardsRes] = await Promise.all([
-    service.from('leads').select('id, created_at').eq('store_id', ctx.storeId),
-    service.from('boards').select('id, total_value, created_at').eq('store_id', ctx.storeId),
+    supabase.from('leads').select('id, created_at').eq('store_id', user.id),
+    supabase.from('boards').select('id, total_value, created_at').eq('store_id', user.id),
   ])
 
   const leads = leadsRes.data ?? []
