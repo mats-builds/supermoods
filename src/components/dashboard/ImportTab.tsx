@@ -97,7 +97,8 @@ export default function ImportTab() {
   // Staged items (from bulk/CSV)
   const [staged, setStaged] = useState<StagedProduct[]>([])
   const [savedCount, setSavedCount] = useState(0)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({})
 
   async function scrapeOne(url: string): Promise<Product | null> {
     const res = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
@@ -198,30 +199,37 @@ export default function ImportTab() {
   }
 
   async function approve(p: StagedProduct) {
-    setSaveError(null)
-    // Only send fields that exist in store_products table
-    const payload = {
-      name: p.name,
-      maker: p.maker,
-      price: p.price,
-      category: p.category,
-      src: p.src,
-      colors: p.colors ?? [],
-      role: p.role,
-      details: p.details ?? {},
-      gallery: p.gallery ?? [],
-    }
-    const res = await fetch('/api/store/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    if (res.ok) {
-      setStaged(prev => prev.filter(x => x.id !== p.id))
-      setSavedCount(n => n + 1)
-    } else {
+    setSavingId(p.id)
+    setCardErrors(e => { const n = { ...e }; delete n[p.id]; return n })
+    try {
+      const payload = {
+        name: p.name,
+        maker: p.maker,
+        price: p.price,
+        category: p.category,
+        src: p.src,
+        colors: p.colors ?? [],
+        role: p.role,
+        details: p.details ?? {},
+        gallery: p.gallery ?? [],
+      }
+      const res = await fetch('/api/store/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
       const json = await res.json().catch(() => ({}))
-      setSaveError(json.error ?? 'Failed to save product')
+      console.log('[approve]', res.status, json)
+      if (res.ok) {
+        setStaged(prev => prev.filter(x => x.id !== p.id))
+        setSavedCount(n => n + 1)
+      } else {
+        setCardErrors(e => ({ ...e, [p.id]: json.error ?? `Error ${res.status}` }))
+      }
+    } catch (err: any) {
+      setCardErrors(e => ({ ...e, [p.id]: err.message ?? 'Network error' }))
+    } finally {
+      setSavingId(null)
     }
   }
 
@@ -355,11 +363,6 @@ export default function ImportTab() {
             <span className="flex items-center gap-2"><CheckCircle2 size={10} /> Pending review · {staged.length}</span>
             {savedCount > 0 && <span style={{ color: 'oklch(0.45 0.13 145)' }}>{savedCount} saved to catalog</span>}
           </div>
-          {saveError && (
-            <div className="mb-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs" style={{ borderColor: 'oklch(0.75 0.15 27 / 0.3)', background: 'oklch(0.55 0.2 27 / 0.05)', color: 'oklch(0.55 0.2 27)' }}>
-              <AlertCircle size={14} /> {saveError}
-            </div>
-          )}
           {staged.length === 0 && (
             <div className="rounded-2xl border p-10 text-center text-sm" style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}>
               All caught up. Approved items live in your catalog.
@@ -385,17 +388,25 @@ export default function ImportTab() {
                     <span>{p.category}</span>
                     <span style={{ color: 'var(--rust)' }}>{p.price}</span>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2">
+                  {cardErrors[p.id] && (
+                    <p className="mt-2 text-[10px] leading-snug" style={{ color: 'oklch(0.55 0.2 27)' }}>
+                      {cardErrors[p.id]}
+                    </p>
+                  )}
+                  <div className="mt-3 grid grid-cols-2 gap-2">
                     <button
                       onClick={() => approve(p)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[10px] font-medium uppercase tracking-[0.14em] transition-opacity hover:opacity-90"
+                      disabled={savingId === p.id}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[10px] font-medium uppercase tracking-[0.14em] transition-opacity hover:opacity-90 disabled:opacity-60"
                       style={{ background: 'var(--ink)', color: 'var(--primary-foreground)' }}
                     >
-                      <Plus size={11} /> Save
+                      {savingId === p.id ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                      {savingId === p.id ? 'Saving…' : 'Save'}
                     </button>
                     <button
                       onClick={() => dismiss(p.id)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[10px] font-medium uppercase tracking-[0.14em] transition-colors hover:bg-[var(--secondary)]"
+                      disabled={savingId === p.id}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[10px] font-medium uppercase tracking-[0.14em] transition-colors hover:bg-[var(--secondary)] disabled:opacity-60"
                       style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
                     >
                       <X size={11} /> Dismiss
