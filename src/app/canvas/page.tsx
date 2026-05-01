@@ -305,7 +305,7 @@ export default function MoodboardPage() {
           <ArrowLeft size={13} /> Catalog
         </Link>
       </div>
-      <span className="font-serif text-2xl" style={{ color: 'var(--ink)' }}>Supermoods</span>
+      <Link href="/" className="font-serif text-2xl transition-opacity hover:opacity-70" style={{ color: 'var(--ink)' }}>Supermoods</Link>
       <div className="flex items-center gap-2">
         {editMode && (
           <button onClick={() => { if (window.confirm('Reset all positions?')) resetAllLayout() }}
@@ -391,7 +391,7 @@ export default function MoodboardPage() {
               <ArrowLeft size={14} /> Catalog
             </Link>
           </div>
-          <span className="font-serif text-2xl md:text-3xl" style={{ color: 'var(--ink)' }}>Supermoods</span>
+          <Link href="/" className="font-serif text-2xl md:text-3xl transition-opacity hover:opacity-70" style={{ color: 'var(--ink)' }}>Supermoods</Link>
           <div className="flex items-center gap-2">
             <span className="hidden text-[11px] uppercase tracking-[0.2em] md:block" style={{ color: 'var(--muted-foreground)' }}>
               {items.length} {items.length === 1 ? 'piece' : 'pieces'}

@@ -45,9 +45,9 @@ export default function CatalogPage() {
             <SideMenu />
             <span className="hidden text-[11px] uppercase tracking-display md:block" style={{ color: 'var(--muted-foreground)' }}>Collection 2026</span>
           </div>
-          <span className="font-serif text-2xl md:text-3xl" style={{ color: 'var(--ink)' }}>
+          <Link href="/" className="font-serif text-2xl md:text-3xl transition-opacity hover:opacity-70" style={{ color: 'var(--ink)' }}>
             Supermoods
-          </span>
+          </Link>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSearchOpen(v => !v)}

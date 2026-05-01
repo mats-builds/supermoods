@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Search, X } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Search, X } from 'lucide-react'
 import { brands, brandProducts } from '@/lib/brands'
 import { useSelection } from '@/lib/selection-store'
 import SideMenu from '@/components/shared/SideMenu'
@@ -52,10 +52,17 @@ export default function BrandsPage() {
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
           <div className="flex items-center gap-2">
             <SideMenu />
+            <Link
+              href="/"
+              className="hidden items-center gap-1.5 text-[11px] uppercase tracking-display transition-opacity hover:opacity-60 md:flex"
+              style={{ color: 'var(--muted-foreground)' }}
+            >
+              <ArrowLeft size={11} strokeWidth={2} /> Catalog
+            </Link>
           </div>
-          <span className="font-serif text-2xl tracking-wide md:text-3xl" style={{ color: 'var(--ink)' }}>
+          <Link href="/" className="font-serif text-2xl tracking-wide md:text-3xl transition-opacity hover:opacity-70" style={{ color: 'var(--ink)' }}>
             Supermoods
-          </span>
+          </Link>
           <button
             onClick={() => count > 0 && router.push('/canvas')}
             className="flex h-10 items-center gap-2 rounded-full px-4 text-sm transition-transform hover:scale-[1.02]"

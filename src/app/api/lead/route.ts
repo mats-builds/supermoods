@@ -8,6 +8,19 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+async function getLinkDurationDays(): Promise<number> {
+  try {
+    const { data } = await supabase
+      .from('store_settings')
+      .select('value')
+      .eq('key', 'link_duration_days')
+      .single()
+    return parseInt(data?.value ?? '14', 10) || 14
+  } catch {
+    return 14
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -17,11 +30,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Name and email required' }, { status: 400 })
     }
 
-    // Create session with magic link token
+    // Determine expiry from store settings
+    const durationDays = await getLinkDurationDays()
+    const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString()
+
+    // Create session with magic link token + expiry
     const token = crypto.randomBytes(32).toString('hex')
     const { data: session, error: sessionErr } = await supabase
       .from('sessions')
-      .insert({ magic_link_token: token, store_id: 'default' })
+      .insert({ magic_link_token: token, store_id: 'default', expires_at: expiresAt })
       .select()
       .single()
 
@@ -79,7 +96,7 @@ export async function POST(req: NextRequest) {
         from: 'Supermoods <noreply@supermoods.store>',
         to: email,
         subject: `${name}, your moodboard is ready`,
-        html: buildEmailHtml(name, magicLink, totalValue, items?.length),
+        html: buildEmailHtml(name, magicLink, totalValue, items?.length, durationDays),
       })
     }
 
@@ -90,7 +107,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function buildEmailHtml(name: string, link: string, total: number, count: number): string {
+function buildEmailHtml(name: string, link: string, total: number, count: number, durationDays: number): string {
+  const expiry = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000)
+    .toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -102,7 +122,7 @@ function buildEmailHtml(name: string, link: string, total: number, count: number
       You composed a board with ${count} ${count === 1 ? 'piece' : 'pieces'} — a total of <strong>€${total.toLocaleString()}</strong>.
     </p>
     <p style="font-size:15px;color:#4A4742;line-height:1.7;margin:0 0 40px">
-      Your private link lets you revisit, refine, and share it from anywhere.
+      Your private link lets you revisit, refine, and share it from anywhere. It stays active until <strong>${expiry}</strong>.
     </p>
     <a href="${link}" style="display:inline-block;background:#1A1916;color:#FAFAF8;text-decoration:none;padding:16px 40px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase">
       Open my moodboard →
