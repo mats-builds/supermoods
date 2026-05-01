@@ -2,7 +2,6 @@
 
 import { useRef, useState } from 'react'
 import { Download, Upload, FileText, Loader2, AlertCircle, CheckCircle2, X, Plus, Link2 } from 'lucide-react'
-import { userProductsStore } from '@/lib/user-products-store'
 import type { Product, Category, Role } from '@/lib/types'
 
 const VALID_CATEGORIES: Category[] = ['Seating', 'Tables', 'Lighting', 'Storage', 'Decor', 'Textiles', 'Art']
@@ -197,10 +196,17 @@ export default function ImportTab() {
     }
   }
 
-  function approve(p: StagedProduct) {
-    userProductsStore.add(p)
-    setStaged(prev => prev.filter(x => x.id !== p.id))
-    setSavedCount(n => n + 1)
+  async function approve(p: StagedProduct) {
+    const { approved: _, id: _id, ...fields } = p
+    const res = await fetch('/api/store/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    })
+    if (res.ok) {
+      setStaged(prev => prev.filter(x => x.id !== p.id))
+      setSavedCount(n => n + 1)
+    }
   }
 
   function dismiss(id: string) {
