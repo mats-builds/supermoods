@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   BarChart3, Users, Package, Download, ArrowLeft,
   LogOut, Monitor, Settings, Store,
 } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
 import OverviewTab from '@/components/dashboard/OverviewTab'
 import LeadFeedTab from '@/components/dashboard/LeadFeedTab'
 import CatalogTab from '@/components/dashboard/CatalogTab'
@@ -26,26 +27,25 @@ const NAV: { id: Tab; label: string; Icon: typeof BarChart3 }[] = [
 export default function AtelierDashboard() {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('overview')
-  const [authed, setAuthed] = useState<boolean | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  useEffect(() => {
-    fetch('/api/atelier/stats')
-      .then(r => { if (r.status === 401) router.replace('/atelier'); else setAuthed(true) })
-      .catch(() => router.replace('/atelier'))
-  }, [router])
+  const { user, loading, signOut } = useAuth()
 
   async function logout() {
-    await fetch('/api/atelier/auth', { method: 'DELETE' })
+    await signOut()
     router.replace('/atelier')
   }
 
-  if (authed === null) {
+  if (loading) {
     return (
       <div className="h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
         <span className="text-[11px] uppercase tracking-display" style={{ color: 'var(--muted-foreground)' }}>Loading…</span>
       </div>
     )
+  }
+
+  if (!user) {
+    router.replace('/atelier')
+    return null
   }
 
   const activeNav = NAV.find(n => n.id === tab)!
@@ -119,8 +119,8 @@ export default function AtelierDashboard() {
               <Store size={14} style={{ color: 'var(--primary-foreground)' }} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--ink)' }}>Store owner</p>
-              <p className="text-[10px] uppercase tracking-[0.15em]" style={{ color: 'var(--muted-foreground)' }}>Atelier access</p>
+              <p className="text-xs font-medium truncate" style={{ color: 'var(--ink)' }}>{user.email}</p>
+              <p className="text-[10px] uppercase tracking-[0.15em]" style={{ color: 'var(--muted-foreground)' }}>Store owner</p>
             </div>
           </div>
           <button

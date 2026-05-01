@@ -1,25 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function authed(req: NextRequest) {
-  return req.cookies.get('atelier_auth')?.value === 'true'
-}
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { requireOwner, isUnauthorized } from '@/lib/supabase/auth-helpers'
+import { createServiceClient } from '@/lib/supabase/server'
 
 export async function PATCH(req: NextRequest) {
-  if (!authed(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const ctx = await requireOwner()
+  if (isUnauthorized(ctx)) return ctx
 
   const { id, visible } = await req.json()
-  const { error } = await supabase
-    .from('products')
+  const service = createServiceClient()
+
+  // Only allow toggling products that belong to this store
+  const { error } = await service
+    .from('store_products')
     .update({ visible })
     .eq('id', id)
+    .eq('store_id', ctx.storeId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })

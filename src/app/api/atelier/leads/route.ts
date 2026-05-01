@@ -1,50 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
+import { requireOwner, isUnauthorized } from '@/lib/supabase/auth-helpers'
+import { createServiceClient } from '@/lib/supabase/server'
 
-function authed(req: NextRequest) {
-  return req.cookies.get('atelier_auth')?.value === 'true'
-}
+export async function GET() {
+  const ctx = await requireOwner()
+  if (isUnauthorized(ctx)) return ctx
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+  const service = createServiceClient()
 
-export async function GET(req: NextRequest) {
-  if (!authed(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const { data: leads, error } = await service
+    .from('leads')
+    .select(`
+      id, name, email, created_at,
+      sessions!inner(id, magic_link_token),
+      boards:sessions(boards(id, total_value, backdrop, palette, canvas_state))
+    `)
+    .eq('store_id', ctx.storeId)
+    .order('created_at', { ascending: false })
 
-  try {
-    const { data: leads, error } = await supabase
-      .from('leads')
-      .select(`
-        id, name, email, created_at,
-        sessions!inner(id, magic_link_token),
-        boards:sessions(boards(id, total_value, backdrop, palette, canvas_state))
-      `)
-      .order('created_at', { ascending: false })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    if (error) throw error
+  const enriched = (leads ?? []).map((lead: any) => {
+    const board = lead.sessions?.boards?.[0] ?? null
+    return {
+      id: lead.id,
+      name: lead.name,
+      email: lead.email,
+      created_at: lead.created_at,
+      session_id: lead.sessions?.id,
+      magic_link_token: lead.sessions?.magic_link_token,
+      total_value: board?.total_value ?? 0,
+      board_id: board?.id,
+      high_intent: (board?.total_value ?? 0) > 5000,
+    }
+  })
 
-    // Flatten and enrich
-    const enriched = (leads ?? []).map((lead: any) => {
-      const board = lead.sessions?.boards?.[0] ?? null
-      return {
-        id: lead.id,
-        name: lead.name,
-        email: lead.email,
-        created_at: lead.created_at,
-        session_id: lead.sessions?.id,
-        magic_link_token: lead.sessions?.magic_link_token,
-        total_value: board?.total_value ?? 0,
-        board_id: board?.id,
-        high_intent: (board?.total_value ?? 0) > 5000,
-      }
-    })
-
-    return NextResponse.json(enriched)
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+  return NextResponse.json(enriched)
 }

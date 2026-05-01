@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search, Plus, Check, X, ArrowRight, Building2 } from 'lucide-react'
 import { catalog } from '@/lib/catalog'
 import { categories, type Category } from '@/lib/types'
 import { useSelection } from '@/lib/selection-store'
-import { useUserProducts } from '@/lib/user-products-store'
+import { useAuth } from '@/lib/auth'
 import ProductModal from '@/components/catalog/ProductModal'
 import SideMenu from '@/components/shared/SideMenu'
 import type { Product } from '@/lib/types'
@@ -15,17 +15,45 @@ import type { Product } from '@/lib/types'
 export default function CatalogPage() {
   const router = useRouter()
   const { has, toggle, count, clear } = useSelection()
-  const { products: userProducts, hiddenIds } = useUserProducts()
+  const { user, loading: authLoading } = useAuth()
   const [filter, setFilter] = useState<Category | 'All'>('All')
   const [query, setQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [active, setActive] = useState<Product | null>(null)
+  const [storeProducts, setStoreProducts] = useState<Product[] | null>(null)
 
+  // Load store products when owner is signed in
+  useEffect(() => {
+    if (authLoading) return
+    if (!user) { setStoreProducts(null); return }
+
+    fetch('/api/store/products')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          const mapped: Product[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            maker: p.maker,
+            price: p.price,
+            category: p.category,
+            src: p.src,
+            colors: p.colors ?? [],
+            role: p.role ?? 'ground',
+            details: p.details ?? {},
+            gallery: p.gallery ?? [],
+          }))
+          setStoreProducts(mapped)
+        }
+      })
+      .catch(() => setStoreProducts(null))
+  }, [user, authLoading])
+
+  // Owners see their own catalog; visitors see demo products
   const allProducts = useMemo(() => {
-    const seen = new Set<string>()
-    const merged = [...userProducts, ...catalog].filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true })
-    return merged.filter(p => !hiddenIds.has(p.id))
-  }, [userProducts, hiddenIds])
+    if (user && storeProducts !== null) return storeProducts
+    return catalog
+  }, [user, storeProducts])
 
   const items = useMemo(() => {
     return allProducts.filter(p => {
@@ -43,7 +71,9 @@ export default function CatalogPage() {
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
           <div className="flex items-center gap-2">
             <SideMenu />
-            <span className="hidden text-[11px] uppercase tracking-display md:block" style={{ color: 'var(--muted-foreground)' }}>Collection 2026</span>
+            <span className="hidden text-[11px] uppercase tracking-display md:block" style={{ color: 'var(--muted-foreground)' }}>
+              {user ? 'Your catalog' : 'Collection 2026'}
+            </span>
           </div>
           <Link href="/" className="font-serif text-2xl md:text-3xl transition-opacity hover:opacity-70" style={{ color: 'var(--ink)' }}>
             Supermoods
@@ -89,7 +119,7 @@ export default function CatalogPage() {
       {/* Hero */}
       <section className="mx-auto max-w-[1500px] px-6 pb-8 pt-12 md:px-10 md:pt-16">
         <p className="text-xs uppercase tracking-display" style={{ color: 'var(--muted-foreground)' }}>
-          The catalog · 2026 collection
+          {user ? 'Your store · private catalog' : 'The catalog · 2026 collection'}
         </p>
         <div className="mt-3 flex items-end justify-between gap-6">
           <h1 className="font-serif text-5xl leading-[0.95] md:text-7xl" style={{ color: 'var(--ink)' }}>
@@ -97,8 +127,10 @@ export default function CatalogPage() {
             <em className="font-light italic" style={{ color: 'var(--rust)' }}>pieces.</em>
           </h1>
           <p className="hidden max-w-sm text-sm leading-relaxed md:block" style={{ color: 'var(--muted-foreground)' }}>
-            Tap the <span className="inline-flex h-5 w-5 translate-y-1 items-center justify-center rounded-full text-[var(--primary-foreground)]" style={{ background: 'var(--ink)' }}><Plus size={12} /></span> on
-            anything you love. When you're ready, generate a moodboard tuned to your selection.
+            {user
+              ? 'Your private catalog. Add pieces in the Atelier and they appear here for your customers.'
+              : 'Tap the + on anything you love. When you\'re ready, generate a moodboard tuned to your selection.'
+            }
           </p>
         </div>
       </section>
@@ -138,54 +170,71 @@ export default function CatalogPage() {
         </div>
       </section>
 
+      {/* Empty state for logged-in owners with no products yet */}
+      {user && storeProducts !== null && storeProducts.length === 0 && (
+        <section className="mx-auto max-w-[1500px] px-6 md:px-10 pt-16 pb-8 text-center">
+          <p className="font-serif text-3xl" style={{ color: 'var(--ink)' }}>Your catalog is empty</p>
+          <p className="mt-3 text-sm" style={{ color: 'var(--muted-foreground)' }}>Add products in the Atelier to build your private catalog.</p>
+          <Link
+            href="/atelier/dashboard"
+            className="mt-6 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
+            style={{ background: 'var(--ink)', color: 'var(--primary-foreground)' }}
+          >
+            Go to Atelier <ArrowRight size={14} />
+          </Link>
+        </section>
+      )}
+
       {/* Grid */}
-      <section className="mx-auto mt-10 max-w-[1500px] px-6 md:px-10">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
-          {items.map(p => {
-            const selected = has(p.id)
-            return (
-              <article key={p.id} className="group relative">
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl" style={{ background: 'var(--secondary)' }}>
-                  <button
-                    onClick={() => setActive(p)}
-                    className="absolute inset-0 block focus:outline-none"
-                  >
-                    <img
-                      src={p.src}
-                      alt={p.name}
-                      loading="lazy"
-                      className="absolute inset-0 h-full w-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.04]"
-                    />
-                  </button>
-                  <button
-                    onClick={e => { e.stopPropagation(); toggle(p.id) }}
-                    className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full ring-1 transition-all"
-                    style={selected
-                      ? { background: 'var(--rust)', color: 'var(--primary-foreground)' }
-                      : { background: 'var(--card)', color: 'var(--ink)' }
-                    }
-                  >
-                    {selected ? <Check size={16} strokeWidth={2.4} /> : <Plus size={16} />}
-                  </button>
-                </div>
-                <button onClick={() => setActive(p)} className="mt-4 flex w-full items-start justify-between gap-3 text-left">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted-foreground)' }}>
-                      {p.category} · {p.maker}
-                    </p>
-                    <h3 className="mt-1 font-serif text-xl leading-tight" style={{ color: 'var(--ink)' }}>
-                      {p.name}
-                    </h3>
+      {items.length > 0 && (
+        <section className="mx-auto mt-10 max-w-[1500px] px-6 md:px-10">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map(p => {
+              const selected = has(p.id)
+              return (
+                <article key={p.id} className="group relative">
+                  <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl" style={{ background: 'var(--secondary)' }}>
+                    <button
+                      onClick={() => setActive(p)}
+                      className="absolute inset-0 block focus:outline-none"
+                    >
+                      <img
+                        src={p.src}
+                        alt={p.name}
+                        loading="lazy"
+                        className="absolute inset-0 h-full w-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.04]"
+                      />
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); toggle(p.id) }}
+                      className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full ring-1 transition-all"
+                      style={selected
+                        ? { background: 'var(--rust)', color: 'var(--primary-foreground)' }
+                        : { background: 'var(--card)', color: 'var(--ink)' }
+                      }
+                    >
+                      {selected ? <Check size={16} strokeWidth={2.4} /> : <Plus size={16} />}
+                    </button>
                   </div>
-                  <p className="shrink-0 font-serif text-base" style={{ color: 'oklch(0.22 0.02 50 / 0.8)' }}>
-                    {p.price}
-                  </p>
-                </button>
-              </article>
-            )
-          })}
-        </div>
-      </section>
+                  <button onClick={() => setActive(p)} className="mt-4 flex w-full items-start justify-between gap-3 text-left">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted-foreground)' }}>
+                        {p.category} · {p.maker}
+                      </p>
+                      <h3 className="mt-1 font-serif text-xl leading-tight" style={{ color: 'var(--ink)' }}>
+                        {p.name}
+                      </h3>
+                    </div>
+                    <p className="shrink-0 font-serif text-base" style={{ color: 'oklch(0.22 0.02 50 / 0.8)' }}>
+                      {p.price}
+                    </p>
+                  </button>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Sticky footer */}
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-6">

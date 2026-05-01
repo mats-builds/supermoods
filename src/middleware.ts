@@ -1,37 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
+  let res = NextResponse.next()
 
-  // ── Atelier (owner) route protection ────────────────────────────
-  // The login page (/atelier) is always accessible; everything under
-  // /atelier/dashboard and all /api/atelier/* calls require the cookie.
-  if (pathname.startsWith('/atelier/dashboard')) {
-    if (req.cookies.get('atelier_auth')?.value !== 'true') {
-      return NextResponse.redirect(new URL('/atelier', req.url))
+  // Build a Supabase SSR client that can refresh the session cookie
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return req.cookies.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
+          res = NextResponse.next({ request: req })
+          cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options))
+        },
+      },
     }
-  }
+  )
 
-  if (pathname.startsWith('/api/atelier/') && !pathname.endsWith('/api/atelier/auth')) {
-    if (req.cookies.get('atelier_auth')?.value !== 'true') {
+  // Refresh session (keeps token alive between requests)
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // ── Owner route protection ───────────────────────────────────────
+  const ownerRoutes =
+    pathname.startsWith('/atelier/dashboard') ||
+    (pathname.startsWith('/api/atelier/') && pathname !== '/api/atelier/auth')
+
+  if (ownerRoutes && !user) {
+    if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    return NextResponse.redirect(new URL('/atelier', req.url))
   }
 
   // ── Customer guardrails ──────────────────────────────────────────
-  // A visitor with a customer_session cookie is a customer at home.
-  // They should not be able to reach owner-only or in-store-only pages.
   const customerToken = req.cookies.get('customer_session')?.value
   if (customerToken) {
     const blocked = ['/atelier', '/present', '/kiosk', '/canvas', '/account']
     if (blocked.some(p => pathname === p || pathname.startsWith(p + '/'))) {
-      // Redirect them to their board
-      const dest = new URL(`/board/${customerToken}`, req.url)
-      return NextResponse.redirect(dest)
+      return NextResponse.redirect(new URL(`/board/${customerToken}`, req.url))
     }
   }
 
-  return NextResponse.next()
+  return res
 }
 
 export const config = {
