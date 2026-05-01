@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Search, Eye, EyeOff, Trash2, Plus, Pencil, Loader2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { categories, type Category } from '@/lib/types'
 import CatalogEditModal from '@/components/dashboard/CatalogEditModal'
 import type { Product } from '@/lib/types'
@@ -19,8 +20,13 @@ export default function CatalogTab() {
   async function loadProducts() {
     setLoading(true)
     try {
-      const res = await fetch('/api/store/products')
-      if (res.ok) setProducts(await res.json())
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('store_products')
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
+      if (data) setProducts(data)
     } finally {
       setLoading(false)
     }
@@ -30,33 +36,26 @@ export default function CatalogTab() {
 
   async function toggleVisible(p: StoreProduct) {
     setProducts(ps => ps.map(x => x.id === p.id ? { ...x, visible: !x.visible } : x))
-    await fetch('/api/store/products', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: p.id, visible: !p.visible }),
-    })
+    const supabase = createClient()
+    await supabase.from('store_products').update({ visible: !p.visible }).eq('id', p.id)
   }
 
   async function remove(id: string) {
     if (!confirm('Remove this product?')) return
     setProducts(ps => ps.filter(p => p.id !== id))
-    await fetch('/api/store/products', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
+    const supabase = createClient()
+    await supabase.from('store_products').delete().eq('id', id)
   }
 
   async function saveEdit(id: string, patch: Partial<Product>) {
-    const res = await fetch('/api/store/products', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...patch }),
-    })
-    if (res.ok) {
-      const updated = await res.json()
-      setProducts(ps => ps.map(p => p.id === id ? { ...p, ...updated } : p))
-    }
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('store_products')
+      .update(patch)
+      .eq('id', id)
+      .select()
+      .single()
+    if (data) setProducts(ps => ps.map(p => p.id === id ? { ...p, ...data } : p))
   }
 
   const filtered = useMemo(() => {
@@ -192,15 +191,15 @@ export default function CatalogTab() {
       {addOpen && (
         <AddProductModal
           onAdd={async (p) => {
-            const res = await fetch('/api/store/products', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(p),
-            })
-            if (res.ok) {
-              const created = await res.json()
-              setProducts(ps => [...ps, { ...created, visible: true }])
-            }
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+            const { data } = await supabase
+              .from('store_products')
+              .insert({ ...p, store_id: user.id })
+              .select()
+              .single()
+            if (data) setProducts(ps => [...ps, data])
             setAddOpen(false)
           }}
           onClose={() => setAddOpen(false)}

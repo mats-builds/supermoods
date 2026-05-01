@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { Download, Upload, FileText, Loader2, AlertCircle, CheckCircle2, X, Plus, Link2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import type { Product, Category, Role } from '@/lib/types'
 
 const VALID_CATEGORIES: Category[] = ['Seating', 'Tables', 'Lighting', 'Storage', 'Decor', 'Textiles', 'Art']
@@ -202,7 +203,12 @@ export default function ImportTab() {
     setSavingId(p.id)
     setCardErrors(e => { const n = { ...e }; delete n[p.id]; return n })
     try {
-      const payload = {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+
+      const { error } = await supabase.from('store_products').insert({
+        store_id: user.id,
         name: p.name,
         maker: p.maker,
         price: p.price,
@@ -212,22 +218,13 @@ export default function ImportTab() {
         role: p.role,
         details: p.details ?? {},
         gallery: p.gallery ?? [],
-      }
-      const res = await fetch('/api/store/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
       })
-      const json = await res.json().catch(() => ({}))
-      console.log('[approve]', res.status, json)
-      if (res.ok) {
-        setStaged(prev => prev.filter(x => x.id !== p.id))
-        setSavedCount(n => n + 1)
-      } else {
-        setCardErrors(e => ({ ...e, [p.id]: json.error ?? `Error ${res.status}` }))
-      }
+
+      if (error) throw new Error(error.message)
+      setStaged(prev => prev.filter(x => x.id !== p.id))
+      setSavedCount(n => n + 1)
     } catch (err: any) {
-      setCardErrors(e => ({ ...e, [p.id]: err.message ?? 'Network error' }))
+      setCardErrors(e => ({ ...e, [p.id]: err.message ?? 'Save failed' }))
     } finally {
       setSavingId(null)
     }
