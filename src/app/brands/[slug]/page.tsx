@@ -54,8 +54,8 @@ export default function BrandPage({ params }: { params: Promise<{ slug: string }
     <main className="min-h-screen pb-32">
       {/* Header */}
       <header
-        className="sticky top-0 z-30 border-b backdrop-blur-md"
-        style={{ borderColor: 'var(--border)', background: 'color-mix(in oklch, var(--background) 85%, transparent)' }}
+        className="sticky top-0 z-30 border-b bg-[var(--background)]/85 backdrop-blur-md"
+        style={{ borderColor: 'var(--border)' }}
       >
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
           <div className="flex items-center gap-3">
