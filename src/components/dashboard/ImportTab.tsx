@@ -97,6 +97,7 @@ export default function ImportTab() {
   // Staged items (from bulk/CSV)
   const [staged, setStaged] = useState<StagedProduct[]>([])
   const [savedCount, setSavedCount] = useState(0)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   async function scrapeOne(url: string): Promise<Product | null> {
     const res = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
@@ -197,15 +198,30 @@ export default function ImportTab() {
   }
 
   async function approve(p: StagedProduct) {
-    const { approved: _, id: _id, ...fields } = p
+    setSaveError(null)
+    // Only send fields that exist in store_products table
+    const payload = {
+      name: p.name,
+      maker: p.maker,
+      price: p.price,
+      category: p.category,
+      src: p.src,
+      colors: p.colors ?? [],
+      role: p.role,
+      details: p.details ?? {},
+      gallery: p.gallery ?? [],
+    }
     const res = await fetch('/api/store/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(fields),
+      body: JSON.stringify(payload),
     })
     if (res.ok) {
       setStaged(prev => prev.filter(x => x.id !== p.id))
       setSavedCount(n => n + 1)
+    } else {
+      const json = await res.json().catch(() => ({}))
+      setSaveError(json.error ?? 'Failed to save product')
     }
   }
 
@@ -339,6 +355,11 @@ export default function ImportTab() {
             <span className="flex items-center gap-2"><CheckCircle2 size={10} /> Pending review · {staged.length}</span>
             {savedCount > 0 && <span style={{ color: 'oklch(0.45 0.13 145)' }}>{savedCount} saved to catalog</span>}
           </div>
+          {saveError && (
+            <div className="mb-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs" style={{ borderColor: 'oklch(0.75 0.15 27 / 0.3)', background: 'oklch(0.55 0.2 27 / 0.05)', color: 'oklch(0.55 0.2 27)' }}>
+              <AlertCircle size={14} /> {saveError}
+            </div>
+          )}
           {staged.length === 0 && (
             <div className="rounded-2xl border p-10 text-center text-sm" style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}>
               All caught up. Approved items live in your catalog.
