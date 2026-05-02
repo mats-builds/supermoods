@@ -3,9 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Plus, Check, X, RotateCcw, ArrowRight } from 'lucide-react'
-import { catalog } from '@/lib/catalog'
 import { categories, type Category } from '@/lib/types'
-import { useUserProducts } from '@/lib/user-products-store'
 import ProductModal from '@/components/catalog/ProductModal'
 import type { Product } from '@/lib/types'
 
@@ -14,7 +12,7 @@ const IDLE_MS = 3 * 60 * 1000
 
 export default function KioskPage() {
   const router = useRouter()
-  const { products: userProducts, hiddenIds } = useUserProducts()
+  const [allProducts, setAllProducts] = useState<Product[]>([])
   const [filter, setFilter] = useState<Category | 'All'>('All')
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -23,6 +21,13 @@ export default function KioskPage() {
   const [exitPass, setExitPass] = useState('')
   const [exitError, setExitError] = useState('')
   const [tapCount, setTapCount] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then(r => r.ok ? r.json() : [])
+      .then(setAllProducts)
+      .catch(() => setAllProducts([]))
+  }, [])
 
   // Idle reset
   const reset = useCallback(() => {
@@ -45,13 +50,6 @@ export default function KioskPage() {
       window.removeEventListener('click', touch)
     }
   }, [reset])
-
-  const allProducts = useMemo(() => {
-    const seen = new Set<string>()
-    return [...userProducts, ...catalog]
-      .filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true })
-      .filter(p => !hiddenIds.has(p.id))
-  }, [userProducts, hiddenIds])
 
   const items = useMemo(() => {
     return allProducts.filter(p => {

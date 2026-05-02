@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search, Plus, Check, X, ArrowRight, Building2 } from 'lucide-react'
-import { catalog } from '@/lib/catalog'
 import { categories, type Category } from '@/lib/types'
 import { useSelection } from '@/lib/selection-store'
 import { useAuth } from '@/lib/auth'
@@ -20,40 +19,27 @@ export default function CatalogPage() {
   const [query, setQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [active, setActive] = useState<Product | null>(null)
-  const [storeProducts, setStoreProducts] = useState<Product[] | null>(null)
+  const [allProducts, setAllProducts] = useState<Product[]>([])
 
-  // Load store products when owner is signed in
   useEffect(() => {
     if (authLoading) return
-    if (!user) { setStoreProducts(null); return }
-
-    fetch('/api/store/products')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data) {
-          const mapped: Product[] = data.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            maker: p.maker,
-            price: p.price,
-            category: p.category,
-            src: p.src,
-            colors: p.colors ?? [],
-            role: p.role ?? 'ground',
-            details: p.details ?? {},
-            gallery: p.gallery ?? [],
-          }))
-          setStoreProducts(mapped)
-        }
-      })
-      .catch(() => setStoreProducts(null))
+    const url = user ? '/api/store/products' : '/api/products'
+    fetch(url)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setAllProducts(data.map(p => ({
+        id: p.id,
+        name: p.name,
+        maker: p.maker,
+        price: p.price,
+        category: p.category,
+        src: p.src,
+        colors: p.colors ?? [],
+        role: p.role ?? 'ground',
+        details: p.details ?? {},
+        gallery: p.gallery ?? [],
+      }))))
+      .catch(() => setAllProducts([]))
   }, [user, authLoading])
-
-  // Owners see their own catalog; visitors see demo products
-  const allProducts = useMemo(() => {
-    if (user && storeProducts !== null) return storeProducts
-    return catalog
-  }, [user, storeProducts])
 
   const items = useMemo(() => {
     return allProducts.filter(p => {
@@ -171,7 +157,7 @@ export default function CatalogPage() {
       </section>
 
       {/* Empty state for logged-in owners with no products yet */}
-      {user && storeProducts !== null && storeProducts.length === 0 && (
+      {user && !authLoading && allProducts.length === 0 && (
         <section className="mx-auto max-w-[1500px] px-6 md:px-10 pt-16 pb-8 text-center">
           <p className="font-serif text-3xl" style={{ color: 'var(--ink)' }}>Your catalog is empty</p>
           <p className="mt-3 text-sm" style={{ color: 'var(--muted-foreground)' }}>Add products in the Atelier to build your private catalog.</p>
